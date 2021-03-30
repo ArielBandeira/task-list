@@ -12,6 +12,10 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+
+  final _toDoController = TextEditingController();
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,7 +29,21 @@ class _HomeState extends State<Home> {
           Container(
             padding: EdgeInsets.fromLTRB(17.0, 1.0, 7.0, 1.0),
             child: Row(
-              
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: "Nova Tarefa",
+                      labelStyle: TextStyle(color: Colors.blueAccent)
+                    ),
+                    controller: _toDoController,
+                  )
+                ),
+                TextButton(
+                  child: Text("ADD", style: TextStyle(color: Colors.white)),
+                  style: ButtonStyle(),
+                )
+              ],
             ),
           )
         ],
