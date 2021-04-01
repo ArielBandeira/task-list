@@ -25,8 +25,8 @@ class _HomeState extends State<Home> {
         "title": _toDoController.text,
         "ok": false,
       });
+      _toDoController.text = "";
     });
-    _toDoController.text = "";
   }
 
   Widget _buildItem(context, index) {
@@ -39,8 +39,7 @@ class _HomeState extends State<Home> {
         alignment: Alignment.centerLeft,
         padding: EdgeInsets.only(left: 10.0),
         color: Colors.red,
-        child: Icon(Icons.delete, color: Colors.white)
-      ),
+        child: Icon(Icons.delete, color: Colors.white)),
       child: CheckboxListTile(
         title: Text(item["title"]),
         value: item["ok"],
@@ -52,34 +51,49 @@ class _HomeState extends State<Home> {
           });
         },
       ),
+      
       onDismissed: (direction) {
-        //último removido
-        _lastRemoved = Map.from(item);
-        _lastRemovedPos = index;
-        //remover
-        _toDoList.remove(index);
+        setState(() {
+          //último removido
+          _lastRemoved = Map.from(item);
+          _lastRemovedPos = index;
+          //remover
+          _toDoList.removeAt(index);
 
-        final snack = SnackBar(
-          content: Text("Tarefa \"${_lastRemoved["title"]}\ removida!"),
-          duration: Duration(seconds: 2),
-          action: SnackBarAction(
-            label: "Desfazer",
-            onPressed: () {
-              setState(() {
-                _toDoList.insert(_lastRemovedPos, _lastRemoved);                
-              });
-            },
-          ),
-        );
+          final snack = SnackBar(
+            content: Text("Tarefa \"${_lastRemoved["title"]}\" removida!"),
+            duration: Duration(seconds: 2),
+            action: SnackBarAction(
+              label: "Desfazer",
+              onPressed: () {
+                setState(() {
+                  _toDoList.insert(_lastRemovedPos, _lastRemoved);                
+                });
+              },
+            ),
+          );
 
-        //limpar a pilha de SnackeBar
-        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-        //mostrar SnackBar
-        ScaffoldMessenger.of(context).showSnackBar(snack);
-      },  
+          //limpar a pilha de SnackeBar
+          ScaffoldMessenger.of(context).removeCurrentSnackBar();
+          //mostrar SnackBar
+          ScaffoldMessenger.of(context).showSnackBar(snack);
+        });
+      }  
     );
   }
 
+  Future<Null> _refresh() async {
+    setState(() {
+
+      //ordenar lista
+      _toDoList.sort((a, b) {
+        if(a["ok"] && !b["ok"]) return 1;
+        else if(!a["ok"] && b["ok"]) return -1;
+        else return 0;
+      });
+
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -115,11 +129,14 @@ class _HomeState extends State<Home> {
             )
           ),
           Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.only(top: 10.0),
-              itemCount: _toDoList.length,
-              itemBuilder: _buildItem
-            )
+            child: RefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView.builder(
+                    padding: EdgeInsets.only(top: 10.0),
+                    itemCount: _toDoList.length,
+                    itemBuilder: _buildItem
+              ),
+            ),
           )
         ],
       ));
