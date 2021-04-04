@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 void main() {
   runApp(MaterialApp(
@@ -25,6 +29,8 @@ class _HomeState extends State<Home> {
         "title": _toDoController.text,
         "ok": false,
       });
+      //salvar
+      _saveData();
       _toDoController.text = "";
     });
   }
@@ -47,7 +53,9 @@ class _HomeState extends State<Home> {
           CircleAvatar(child: Icon(item["ok"] ? Icons.check : Icons.error)),
         onChanged: (ok) {
           setState(() {
-            item["ok"] = ok;          
+            item["ok"] = ok;    
+            //salvar
+            _saveData();      
           });
         },
       ),
@@ -59,6 +67,9 @@ class _HomeState extends State<Home> {
           _lastRemovedPos = index;
           //remover
           _toDoList.removeAt(index);
+          //salvar
+          _saveData();
+
 
           final snack = SnackBar(
             content: Text("Tarefa \"${_lastRemoved["title"]}\" removida!"),
@@ -67,7 +78,9 @@ class _HomeState extends State<Home> {
               label: "Desfazer",
               onPressed: () {
                 setState(() {
-                  _toDoList.insert(_lastRemovedPos, _lastRemoved);                
+                  _toDoList.insert(_lastRemovedPos, _lastRemoved);  
+                  //salvar
+                  _saveData();              
                 });
               },
             ),
@@ -84,14 +97,41 @@ class _HomeState extends State<Home> {
 
   Future<Null> _refresh() async {
     setState(() {
-
       //ordenar lista
       _toDoList.sort((a, b) {
         if(a["ok"] && !b["ok"]) return 1;
         else if(!a["ok"] && b["ok"]) return -1;
         else return 0;
       });
+      //salvar
+      _saveData();
+    });
+  }
 
+  Future<File> _saveData() async {
+    String data = json.encode(_toDoList);
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File("${directory.path}/data.json");
+    return file.writeAsString(data);
+  }
+
+  Future<String> _loadData() async {
+    try{
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File("${directory.path}/data.json");
+      return await file.readAsString();
+    } catch(e) {
+      return null;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData().then((data) {
+      setState(() {
+        _toDoList = json.decode(data);        
+      });  
     });
   }
 
